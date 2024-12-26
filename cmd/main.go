@@ -19,25 +19,28 @@ var multipliers = map[string]float64{
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: b2h <numOfBytes> -t [KB|MB|GB|TB]")
+		usage()
 		return
 	}
 
 	input := os.Args[1]
 	value, err := strconv.ParseFloat(input, 64)
 	if err != nil {
-		fmt.Printf("Error: '%s' is not a valid number\n", input)
+		usage()
 		return
 	}
 
 	flagSet := flag.NewFlagSet("b2h", flag.ExitOnError)
-	unit := flagSet.String("u", "MB", "unit of conversion (KB, MB, ...)")
+	flagSet.Usage = usage
+
+	unit := flagSet.String("u", "MB", "")
+	precision := flagSet.Int("p", 2, "")
 
 	flagSet.Parse(os.Args[2:])
 
 	multiplier, ok := multipliers[*unit]
 	if !ok {
-		fmt.Printf("Error: '%s' is not an available unit\n", *unit)
+		fmt.Printf("Error: '%s' is not an available unit.\n", *unit)
 		return
 	}
 
@@ -46,11 +49,16 @@ func main() {
 		rounded string
 	)
 
-	if result < 1 {
-		rounded = fmt.Sprintf("%.10f", result)
-	} else {
-		rounded = fmt.Sprintf("%.2f", result)
-	}
+	format := fmt.Sprintf("%%.%df", *precision)
+	rounded = fmt.Sprintf(format, result)
 
 	fmt.Printf("%s %s\n", rounded, *unit)
+}
+
+func usage() {
+	fmt.Println(`Usage of b2h <numOfBytes>:
+  -u string
+        unit of conversion (KB, MB, ...) (default "MB")
+  -p int
+        output precision to control decimal places (default 2)`)
 }
